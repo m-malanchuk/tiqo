@@ -1,0 +1,56 @@
+[project]
+name = "tiqo"
+version = "0.1.0"
+description = "Personal time tracker for KDE Plasma"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    # Essentials covers QML/Controls/tray. Extra Addons (e.g. QtMultimedia for stage 3 sound)
+    # are a separate decision — do not pull the full PySide6 metapackage.
+    "PySide6_Essentials>=6.8",
+]
+
+[project.scripts]
+tiqo = "app.ui.main:main"
+tiqo-demo = "app.dev.demo_cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.9",
+    "pyright>=1.1",
+    "time-machine>=3.5.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"migrations" = "app/migrations"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/i18n/ui_extra.py" = ["E501"]
+"app/i18n/catalog.py" = ["E501"]
+
+[tool.pyright]
+include = ["app", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"

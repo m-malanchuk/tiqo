@@ -1,0 +1,9 @@
+module controls
+AppToolWindow 1.0 AppToolWindow.qml
+ParentPicker 1.0 ParentPicker.qml
+EmptyState 1.0 EmptyState.qml
+GroupSideBar 1.0 GroupSideBar.qml
+TaskCard 1.0 TaskCard.qml
+RecurrenceFields 1.0 RecurrenceFields.qml
+DateCalendar 1.0 DateCalendar.qml
+DeleteConfirmDialog 1.0 DeleteConfirmDialog.qml

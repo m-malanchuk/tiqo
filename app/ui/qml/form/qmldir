@@ -1,0 +1,12 @@
+module form
+FormLabel 1.0 FormLabel.qml
+FormHint 1.0 FormHint.qml
+FormTextField 1.0 FormTextField.qml
+FormTextArea 1.0 FormTextArea.qml
+FormComboBox 1.0 FormComboBox.qml
+FormButton 1.0 FormButton.qml
+FormIconButton 1.0 FormIconButton.qml
+FormSpinBox 1.0 FormSpinBox.qml
+FormRadioButton 1.0 FormRadioButton.qml
+FormCheckBox 1.0 FormCheckBox.qml
+FormField 1.0 FormField.qml

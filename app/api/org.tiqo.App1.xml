@@ -1,0 +1,54 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<!--
+  Canonical IPC contract for tiqo (Plasma widget / scripts).
+  Service: org.tiqo.App
+  Path:    /org/tiqo/App
+  See docs/DBUS.md for semantics and JSON shapes.
+-->
+<node name="/org/tiqo/App">
+  <interface name="org.tiqo.App1">
+    <method name="Ping">
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="Version">
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="ListWork">
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="ListLists">
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="ListTasks">
+      <arg name="list_id" type="i" direction="in"/>
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="TodayStats">
+      <arg name="list_id" type="i" direction="in"/>
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="Resume">
+      <arg name="task_id" type="i" direction="in"/>
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="Pause">
+      <arg name="task_id" type="i" direction="in"/>
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="Stop">
+      <arg name="task_id" type="i" direction="in"/>
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="ToggleChecklist">
+      <arg name="task_id" type="i" direction="in"/>
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="CompleteChecklist">
+      <arg name="task_id" type="i" direction="in"/>
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="ShowWindow"/>
+    <signal name="WorkChanged"/>
+  </interface>
+</node>

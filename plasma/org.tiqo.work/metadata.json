@@ -1,0 +1,23 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "tiqo"
+            }
+        ],
+        "Category": "Utilities",
+        "Description": "Panel and tray widget for tiqo in-work tasks",
+        "Description[ru]": "Виджет панели и трея для задач «В работе» из tiqo",
+        "Description[uk]": "Віджет панелі та трею для задач «В роботі» з tiqo",
+        "Icon": "chronometer",
+        "Id": "org.tiqo.work",
+        "License": "MIT",
+        "Name": "tiqo Plasma Widget",
+        "Name[ru]": "tiqo Plasma Widget",
+        "Name[uk]": "tiqo Plasma Widget",
+        "Version": "0.2.6",
+        "Website": "https://github.com/local/tiqo"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

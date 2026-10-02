@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=tiqo
+Comment=Personal time tracker
+Exec=tiqo
+Icon=tiqo
+Terminal=false
+Categories=Utility;
+StartupNotify=true
+StartupWMClass=tiqo
+Keywords=time;tracker;tasks;
+

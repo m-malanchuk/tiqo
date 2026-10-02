@@ -1,0 +1,46 @@
+# Arch Linux package for tiqo and its Plasma widget.
+#
+# This PKGBUILD expects a source archive beside it.  From a clean checkout:
+#   git archive --format=tar.gz --prefix=tiqo-0.1.0/ -o packaging/tiqo-0.1.0.tar.gz HEAD
+#   (cd packaging && makepkg -Csi -p PKGBUILD)
+#
+# The archive is intentionally local: tiqo is a personal application and is
+# not published to a remote package repository.
+
+pkgname=tiqo
+pkgver=0.1.0
+pkgrel=2
+pkgdesc='Personal time tracker for KDE Plasma'
+arch=('any')
+# The project is a private local application and has no public project URL.
+license=('custom')
+depends=('python' 'pyside6')
+makedepends=('python-build' 'python-hatchling' 'python-installer')
+source=("${pkgname}-${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "${srcdir}/${pkgname}-${pkgver}"
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "${srcdir}/${pkgname}-${pkgver}"
+
+    python -m installer --destdir="${pkgdir}" dist/*.whl
+
+    # The runtime icon is SVG; Qt rasterizes it for the window and tray.
+    install -Dm644 app/assets/icons/source/app.svg \
+        "${pkgdir}/usr/share/icons/hicolor/scalable/apps/tiqo.svg"
+
+    install -Dm644 packaging/tiqo.desktop \
+        "${pkgdir}/usr/share/applications/tiqo.desktop"
+    install -Dm644 packaging/tiqo-autostart.desktop \
+        "${pkgdir}/usr/share/tiqo/tiqo-autostart.desktop"
+
+    # Ship the widget in the same package as the application.  It communicates
+    # with the running process through org.tiqo.App1 and never reads SQLite.
+    install -d "${pkgdir}/usr/share/plasma/plasmoids/org.tiqo.work"
+    cp -r plasma/org.tiqo.work/. \
+        "${pkgdir}/usr/share/plasma/plasmoids/org.tiqo.work/"
+}

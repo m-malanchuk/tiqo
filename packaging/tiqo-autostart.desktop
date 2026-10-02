@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=tiqo
+Comment=Start tiqo in the background
+Exec=tiqo
+Icon=tiqo
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-phase=2
+X-KDE-StartupNotify=false
+OnlyShowIn=KDE;
+

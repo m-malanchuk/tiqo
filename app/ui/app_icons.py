@@ -193,7 +193,7 @@ def ensure_desktop_app_icon() -> Path | None:
 
 def is_dark_color_scheme() -> bool:
     app = QGuiApplication.instance()
-    if app is None:
+    if not isinstance(app, QGuiApplication):
         return True
     scheme = app.styleHints().colorScheme()
     if scheme == Qt.ColorScheme.Dark:

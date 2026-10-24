@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import contextlib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from PySide6.QtCore import SignalInstance, Slot
+from PySide6.QtCore import Slot
 
 from app.domain.models import (
     LIST_ALL_ID,
@@ -49,15 +49,18 @@ class DialogsMixin:
     _parent_picker: PickerModel
     _list_picker: PickerModel
 
-    createDialogChanged: SignalInstance
-    listDialogChanged: SignalInstance
-    editDialogChanged: SignalInstance
-    deleteDialogChanged: SignalInstance
-    startDialogChanged: SignalInstance
-    parentPickerChanged: SignalInstance
-    selectionChanged: SignalInstance
-    emojiPickerOpenChanged: SignalInstance
-    emojiQueryChanged: SignalInstance
+    # These descriptors are declared by the QObject subclass. A mixin cannot
+    # express PySide's class-level Signal -> instance-level SignalInstance
+    # descriptor relationship, so keep the injected attributes dynamic here.
+    createDialogChanged: Any
+    listDialogChanged: Any
+    editDialogChanged: Any
+    deleteDialogChanged: Any
+    startDialogChanged: Any
+    parentPickerChanged: Any
+    selectionChanged: Any
+    emojiPickerOpenChanged: Any
+    emojiQueryChanged: Any
 
     if TYPE_CHECKING:
 

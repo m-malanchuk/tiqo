@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable
+from typing import Any, cast
 
 from PySide6.QtCore import ClassInfo, QObject, Signal, Slot
 from PySide6.QtDBus import QDBusConnection
@@ -35,7 +36,7 @@ INTERFACE = "org.tiqo.App1"
 API_VERSION = "5"
 
 
-@ClassInfo({"D-Bus Interface": INTERFACE})
+@cast(Any, ClassInfo)({"D-Bus Interface": INTERFACE})
 class TiqoDBusAdaptor(QObject):
     """Qt D-Bus adaptor methods (introspectable via Qt meta-object)."""
 

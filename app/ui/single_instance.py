@@ -57,6 +57,6 @@ class SingleInstance(QObject):
             sock.readyRead.connect(lambda s=sock: self._read_and_raise(s))
 
     def _read_and_raise(self, sock: QLocalSocket) -> None:
-        _ = bytes(sock.readAll())
+        _ = sock.readAll().data()
         sock.disconnectFromServer()
         self.raiseRequested.emit()

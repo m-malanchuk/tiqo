@@ -32,6 +32,19 @@ RadioButton {
         }
     }
 
+    // The KDE style's default label does not always reserve the gap when a
+    // custom indicator is supplied. Add the offset explicitly so the caption
+    // stays readable next to the radio ring.
+    contentItem: Text {
+        text: root.text
+        font: root.font
+        color: theme.text
+        leftPadding: root.indicator ? root.indicator.width + root.spacing : 0
+        rightPadding: root.mirrored && root.indicator ? root.indicator.width + root.spacing : 0
+        wrapMode: Text.WordWrap
+        verticalAlignment: Text.AlignVCenter
+    }
+
     HoverHandler {
         enabled: root.enabled
         cursorShape: Qt.PointingHandCursor

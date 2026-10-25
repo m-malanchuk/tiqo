@@ -72,13 +72,11 @@ uv run pytest
 uv run pyright
 ```
 
-## Documentation
+## Development resources
 
-- [Design and data model](docs/DISDOC.md)
-- [Architecture and code health](docs/CODE_AUDIT.md)
-- [D-Bus API](docs/DBUS.md)
-- [Roadmap and completion criteria](docs/TASKS.md)
-- [Plasma widget development](plasma/README.md)
+The repository contains the Plasma widget sources under `plasma/`. Internal
+design notes and task planning remain local and are intentionally excluded from
+the public repository.
 
 ## Status
 

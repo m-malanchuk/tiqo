@@ -38,6 +38,12 @@ Window {
     function t2(key, a, b) { var _ = _lang; return i18n.t2(key, String(a), String(b)) }
 
     function open() {
+        // Property-notify signals for dialog fields are shared with the open
+        // state.  They can call this method again while the window is already
+        // visible; do not re-run `opened()`, or a field would steal focus on
+        // every keystroke.
+        if (visible)
+            return
         visible = true
         raise()
         requestActivate()

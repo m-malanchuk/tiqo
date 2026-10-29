@@ -8,8 +8,8 @@
 # not published to a remote package repository.
 
 pkgname=tiqo
-pkgver=0.1.0
-pkgrel=2
+pkgver=0.1.1
+pkgrel=1
 pkgdesc='Personal time tracker for KDE Plasma'
 arch=('any')
 # The project is a private local application and has no public project URL.

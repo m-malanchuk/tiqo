@@ -378,11 +378,8 @@ class AppViewModel(DialogsMixin, QObject):
 
     @Property(str, notify=createDialogChanged)
     def createListHint(self) -> str:  # noqa: N802
-        if (
-            self._selected_list_id in (LIST_TODAY_ID, LIST_IN_WORK_ID, LIST_ALL_ID)
-            and self._create_list_id == LIST_FAVORITES_ID
-        ):
-            return tr("hint.create_to_favorites")
+        if self._create_list_id == LIST_FAVORITES_ID:
+            return tr("hint.create_no_group")
         selected = self._lists_repo.get(self._create_list_id)
         if selected is None:
             return ""

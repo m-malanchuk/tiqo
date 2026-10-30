@@ -106,7 +106,6 @@ class DialogsMixin:
             )
         else:
             self._create_list_id = self._default_create_list_id()
-        self._create_is_favorite = self._create_list_id == LIST_FAVORITES_ID
         # Parent comes only from «+» on a card; create dialog has no parent picker.
         self._set_draft_parent(parent_id)
         self._reload_list_picker()
@@ -164,8 +163,6 @@ class DialogsMixin:
     @Slot(int)
     def setCreateListId(self, value: int) -> None:  # noqa: N802
         self._create_list_id = int(value)
-        if self._create_list_id == LIST_FAVORITES_ID:
-            self._create_is_favorite = True
         self.createDialogChanged.emit()
 
     @Slot(str)
@@ -221,7 +218,7 @@ class DialogsMixin:
             kind=kind,
             default_mode=mode,
             default_target_seconds=target,
-            is_favorite=self._create_is_favorite or list_id == LIST_FAVORITES_ID,
+            is_favorite=self._create_is_favorite,
         )
         self._tasks_svc.set_parent(
             task.id, self._draft_parent_id if self._draft_parent_id else None
@@ -295,7 +292,7 @@ class DialogsMixin:
         self._edit_task_id = task.id
         self._edit_title = task.title
         self._edit_description = task.description
-        self._edit_is_favorite = task.is_favorite or task.list_id == LIST_FAVORITES_ID
+        self._edit_is_favorite = task.is_favorite
         self._edit_kind = task.kind.value
         self._edit_mode = task.default_mode.value
         seconds = task.default_target_seconds or 0
@@ -453,7 +450,7 @@ class DialogsMixin:
             default_target_seconds=target,
             update_target=True,
             list_id=list_id,
-            is_favorite=self._edit_is_favorite or list_id == LIST_FAVORITES_ID,
+            is_favorite=self._edit_is_favorite,
         )
         self._tasks_svc.set_parent(
             self._edit_task_id,
@@ -474,7 +471,7 @@ class DialogsMixin:
 
     @Slot()
     def removeEditTaskFromGroup(self) -> None:  # noqa: N802
-        """Move task to Favorites (leave the current group without deleting)."""
+        """Remove the task's group without changing its Favorites flag."""
         if not self._edit_task_id:
             return
         task = self._tasks_repo.get(self._edit_task_id)
@@ -483,12 +480,11 @@ class DialogsMixin:
         self._tasks_repo.update(
             self._edit_task_id,
             list_id=LIST_FAVORITES_ID,
-            is_favorite=True,
         )
         self._edit_open = False
         self.editDialogChanged.emit()
         self.refresh_tasks()
-        self._set_status(tr("status.moved_to_favorites", title=task.title))
+        self._set_status(tr("status.removed_from_group", title=task.title))
 
     @Slot()
     def unparentEditTask(self) -> None:  # noqa: N802
@@ -706,11 +702,13 @@ class DialogsMixin:
         self.parentPickerChanged.emit()
 
     def _reload_list_picker(self) -> None:
-        """Favorites + user lists (exclude virtual today / in_work / all)."""
+        """No-group sentinel + user lists (exclude virtual system lists)."""
         excluded = {LIST_TODAY_ID, LIST_IN_WORK_ID, LIST_ALL_ID}
-        rows: list[PickerRow] = []
+        rows: list[PickerRow] = [
+            PickerRow(id=LIST_FAVORITES_ID, title=tr("list.no_group")),
+        ]
         for item in self._lists_repo.list_all():
-            if item.id in excluded or item.key == LIST_KEY_ALL:
+            if item.id in excluded or item.id == LIST_FAVORITES_ID or item.key == LIST_KEY_ALL:
                 continue
             title = list_title(item.key, item.name)
             rows.append(PickerRow(id=item.id, title=title))

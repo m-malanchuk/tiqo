@@ -142,8 +142,6 @@ class TaskRepo:
         new_archived = task.is_archived if is_archived is None else is_archived
         new_list_id = task.list_id if list_id is None else list_id
         new_favorite = task.is_favorite if is_favorite is None else is_favorite
-        if new_list_id == LIST_FAVORITES_ID:
-            new_favorite = True
 
         if new_kind is TaskKind.CHECKLIST:
             new_mode = TimerMode.STOPWATCH
@@ -231,7 +229,7 @@ class TaskRepo:
         kind: TaskKind = TaskKind.TIMED,
         default_mode: TimerMode = TimerMode.STOPWATCH,
         default_target_seconds: int | None = None,
-        is_favorite: bool = False,
+        is_favorite: bool | None = None,
         created_at: datetime | None = None,
         parent_task_id: int | None = None,
     ) -> Task:
@@ -239,7 +237,11 @@ class TaskRepo:
         if kind is TaskKind.CHECKLIST:
             default_mode = TimerMode.STOPWATCH
             default_target_seconds = None
-        is_favorite = is_favorite or list_id == LIST_FAVORITES_ID
+        # The UI passes an explicit value from the Favorites checkbox. Keep
+        # the legacy default for direct repository callers that still use the
+        # Favorites list id for an intentionally favorite task.
+        if is_favorite is None:
+            is_favorite = list_id == LIST_FAVORITES_ID
         with write(self._conn):
             cur = self._conn.execute(
                 """

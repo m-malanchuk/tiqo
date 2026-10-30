@@ -61,7 +61,27 @@ def test_defaults_to_all(seeded: tuple[SeedResult, AppViewModel]) -> None:
         assert vm.tasks_model().rowCount() == 3
         vm.openCreateDialog()
         assert vm.createListId == LIST_FAVORITES_ID
+        assert not vm.createIsFavorite
+        picker = vm._list_picker
+        picker_titles = [
+            str(picker.data(picker.index(i, 0), picker.TitleRole)) for i in range(picker.rowCount())
+        ]
+        assert "Избранное" not in picker_titles
+        assert any("Без группы" in title for title in picker_titles)
         vm.closeCreateDialog()
+
+
+def test_create_without_checkbox_is_not_favorite(seeded: tuple[SeedResult, AppViewModel]) -> None:
+    seed, vm = seeded
+    with time_machine.travel(T0, tick=False):
+        vm.openCreateDialog()
+        vm.setCreateListId(LIST_FAVORITES_ID)
+        vm.setCreateTitle("Ungrouped")
+        vm.submitCreateDialog()
+
+        task = next(t for t in TaskRepo(seed.conn).list_all() if t.title == "Ungrouped")
+        assert task.list_id == LIST_FAVORITES_ID
+        assert not task.is_favorite
 
 
 def test_create_with_parent_and_start_dialog(seeded: tuple[SeedResult, AppViewModel]) -> None:
@@ -137,7 +157,29 @@ def test_create_task_can_be_in_group_and_favorites(
         assert "Grammar" in _titles(vm.tasks_model())
 
 
-def test_move_task_to_favorites_marks_it_favorite(
+def test_create_task_in_group_is_not_favorite_without_checkbox(
+    seeded: tuple[SeedResult, AppViewModel],
+) -> None:
+    seed, vm = seeded
+    with time_machine.travel(T0, tick=False):
+        from app.storage.list_repo import ListRepo
+
+        english = ListRepo(seed.conn).create("English")
+        vm.openCreateDialog()
+        vm.setCreateListId(english.id)
+        vm.setCreateTitle("Vocabulary")
+        vm.submitCreateDialog()
+
+        task = next(t for t in TaskRepo(seed.conn).list_all() if t.title == "Vocabulary")
+        assert task.list_id == english.id
+        assert not task.is_favorite
+        vm.selectList(LIST_FAVORITES_ID)
+        assert "Vocabulary" not in _titles(vm.tasks_model())
+        vm.selectList(english.id)
+        assert "Vocabulary" in _titles(vm.tasks_model())
+
+
+def test_remove_task_from_group_does_not_mark_it_favorite(
     seeded: tuple[SeedResult, AppViewModel],
 ) -> None:
     seed, vm = seeded
@@ -152,9 +194,9 @@ def test_move_task_to_favorites_marks_it_favorite(
         moved = TaskRepo(seed.conn).get(task.id)
         assert moved is not None
         assert moved.list_id == LIST_FAVORITES_ID
-        assert moved.is_favorite
+        assert not moved.is_favorite
         vm.selectList(LIST_FAVORITES_ID)
-        assert "Grammar" in _titles(vm.tasks_model())
+        assert "Grammar" not in _titles(vm.tasks_model())
 
 
 def test_history_refresh_does_not_reopen_window(

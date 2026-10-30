@@ -682,7 +682,7 @@ class DialogsMixin:
     def _reload_parent_picker_for_edit(self, task_id: int) -> None:
         """Parents you may assign: ancestors (move up) or, if root, any non-descendant."""
         rows = [
-            PickerRow(id=0, title="— без родительской задачи —"),
+            PickerRow(id=0, title=tr("parent.none")),
         ]
         ancestors = self._tasks_repo.ancestor_ids(task_id)
         if ancestors:

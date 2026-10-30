@@ -34,6 +34,13 @@ AppToolWindow {
         }
     }
 
+    FormCheckBox {
+        text: t("action.add_to_favorites")
+        checked: app.createIsFavorite
+        enabled: app.createListId !== 1
+        onClicked: app.setCreateFavorite(checked)
+    }
+
     FormField {
         label: t("field.title")
         FormTextField {

@@ -140,6 +140,7 @@ class AppViewModel(DialogsMixin, QObject):
         self._create_open = False
         self._create_title = ""
         self._create_description = ""
+        self._create_is_favorite = False
         self._create_kind = TaskKind.TIMED.value
         self._create_mode = TimerMode.STOPWATCH.value
         self._create_hours = 0
@@ -160,6 +161,7 @@ class AppViewModel(DialogsMixin, QObject):
         self._edit_task_id = 0
         self._edit_title = ""
         self._edit_description = ""
+        self._edit_is_favorite = False
         self._edit_kind = TaskKind.TIMED.value
         self._edit_mode = TimerMode.STOPWATCH.value
         self._edit_hours = 0
@@ -334,6 +336,10 @@ class AppViewModel(DialogsMixin, QObject):
     def createDescription(self) -> str:  # noqa: N802
         return self._create_description
 
+    @Property(bool, notify=createDialogChanged)
+    def createIsFavorite(self) -> bool:  # noqa: N802
+        return self._create_is_favorite
+
     @Property(str, notify=createDialogChanged)
     def createKind(self) -> str:  # noqa: N802
         return self._create_kind
@@ -442,6 +448,10 @@ class AppViewModel(DialogsMixin, QObject):
     @Property(int, notify=editDialogChanged)
     def editListId(self) -> int:  # noqa: N802
         return self._edit_list_id
+
+    @Property(bool, notify=editDialogChanged)
+    def editIsFavorite(self) -> bool:  # noqa: N802
+        return self._edit_is_favorite
 
     @Property(str, notify=editDialogChanged)
     def editRecurrenceKind(self) -> str:  # noqa: N802

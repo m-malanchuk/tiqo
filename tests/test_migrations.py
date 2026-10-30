@@ -13,8 +13,8 @@ from app.storage.migrations import apply_migrations, current_version
 def test_apply_migrations_seeds_system_lists() -> None:
     conn = connect_memory()
     version = apply_migrations(conn)
-    assert version == 10
-    assert current_version(conn) == 10
+    assert version == 11
+    assert current_version(conn) == 11
 
     lists = ListRepo(conn).list_all()
     keys = [item.key for item in lists]
@@ -26,8 +26,8 @@ def test_apply_migrations_seeds_system_lists() -> None:
 
 def test_apply_migrations_is_idempotent() -> None:
     conn = connect_memory()
-    assert apply_migrations(conn) == 10
-    assert apply_migrations(conn) == 10
+    assert apply_migrations(conn) == 11
+    assert apply_migrations(conn) == 11
 
     tables = {
         row[0]

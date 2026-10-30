@@ -113,6 +113,50 @@ def test_create_and_toggle_checklist(seeded: tuple[SeedResult, AppViewModel]) ->
         assert uncompleted is not None and not uncompleted.is_completed
 
 
+def test_create_task_can_be_in_group_and_favorites(
+    seeded: tuple[SeedResult, AppViewModel],
+) -> None:
+    seed, vm = seeded
+    with time_machine.travel(T0, tick=False):
+        from app.storage.list_repo import ListRepo
+
+        english = ListRepo(seed.conn).create("English")
+        vm.openCreateDialog()
+        vm.setCreateListId(english.id)
+        vm.setCreateFavorite(True)
+        vm.setCreateTitle("Grammar")
+        vm.submitCreateDialog()
+
+        task = next(t for t in TaskRepo(seed.conn).list_all() if t.title == "Grammar")
+        assert task.list_id == english.id
+        assert task.is_favorite
+
+        vm.selectList(LIST_FAVORITES_ID)
+        assert "Grammar" in _titles(vm.tasks_model())
+        vm.selectList(english.id)
+        assert "Grammar" in _titles(vm.tasks_model())
+
+
+def test_move_task_to_favorites_marks_it_favorite(
+    seeded: tuple[SeedResult, AppViewModel],
+) -> None:
+    seed, vm = seeded
+    with time_machine.travel(T0, tick=False):
+        from app.storage.list_repo import ListRepo
+
+        english = ListRepo(seed.conn).create("English")
+        task = TaskRepo(seed.conn).create(english.id, "Grammar")
+        vm.openEditDialog(task.id)
+        vm.removeEditTaskFromGroup()
+
+        moved = TaskRepo(seed.conn).get(task.id)
+        assert moved is not None
+        assert moved.list_id == LIST_FAVORITES_ID
+        assert moved.is_favorite
+        vm.selectList(LIST_FAVORITES_ID)
+        assert "Grammar" in _titles(vm.tasks_model())
+
+
 def test_history_refresh_does_not_reopen_window(
     seeded: tuple[SeedResult, AppViewModel],
 ) -> None:

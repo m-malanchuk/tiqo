@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime
 
-from app.domain.models import Task, TaskKind, TimerMode
+from app.domain.models import LIST_FAVORITES_ID, Task, TaskKind, TimerMode
 from app.domain.timeutil import dt_from_db, dt_to_db, utc_now
 from app.storage.transaction import write
 
@@ -128,6 +128,7 @@ class TaskRepo:
         update_target: bool = False,
         is_archived: bool | None = None,
         list_id: int | None = None,
+        is_favorite: bool | None = None,
     ) -> Task:
         task = self.get(task_id)
         if task is None:
@@ -140,6 +141,9 @@ class TaskRepo:
         new_target = default_target_seconds if update_target else task.default_target_seconds
         new_archived = task.is_archived if is_archived is None else is_archived
         new_list_id = task.list_id if list_id is None else list_id
+        new_favorite = task.is_favorite if is_favorite is None else is_favorite
+        if new_list_id == LIST_FAVORITES_ID:
+            new_favorite = True
 
         if new_kind is TaskKind.CHECKLIST:
             new_mode = TimerMode.STOPWATCH
@@ -162,6 +166,7 @@ class TaskRepo:
                     task_kind = ?,
                     default_mode = ?,
                     default_target_seconds = ?,
+                    is_favorite = ?,
                     is_archived = ?,
                     checklist_done = ?,
                     checklist_completed_at = ?
@@ -174,6 +179,7 @@ class TaskRepo:
                     new_kind.value,
                     new_mode.value,
                     new_target,
+                    int(new_favorite),
                     int(new_archived),
                     int(new_checklist_done),
                     None
@@ -233,6 +239,7 @@ class TaskRepo:
         if kind is TaskKind.CHECKLIST:
             default_mode = TimerMode.STOPWATCH
             default_target_seconds = None
+        is_favorite = is_favorite or list_id == LIST_FAVORITES_ID
         with write(self._conn):
             cur = self._conn.execute(
                 """

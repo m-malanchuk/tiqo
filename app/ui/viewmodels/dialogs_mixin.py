@@ -91,6 +91,7 @@ class DialogsMixin:
         self._create_open = True
         self._create_title = ""
         self._create_description = ""
+        self._create_is_favorite = False
         self._create_kind = TaskKind.TIMED.value
         self._create_mode = TimerMode.STOPWATCH.value
         self._create_hours = 0
@@ -105,6 +106,7 @@ class DialogsMixin:
             )
         else:
             self._create_list_id = self._default_create_list_id()
+        self._create_is_favorite = self._create_list_id == LIST_FAVORITES_ID
         # Parent comes only from «+» on a card; create dialog has no parent picker.
         self._set_draft_parent(parent_id)
         self._reload_list_picker()
@@ -128,6 +130,11 @@ class DialogsMixin:
     @Slot(str)
     def setCreateDescription(self, value: str) -> None:  # noqa: N802
         self._create_description = value
+        self.createDialogChanged.emit()
+
+    @Slot(bool)
+    def setCreateFavorite(self, value: bool) -> None:  # noqa: N802
+        self._create_is_favorite = bool(value)
         self.createDialogChanged.emit()
 
     @Slot(str)
@@ -157,6 +164,8 @@ class DialogsMixin:
     @Slot(int)
     def setCreateListId(self, value: int) -> None:  # noqa: N802
         self._create_list_id = int(value)
+        if self._create_list_id == LIST_FAVORITES_ID:
+            self._create_is_favorite = True
         self.createDialogChanged.emit()
 
     @Slot(str)
@@ -212,7 +221,7 @@ class DialogsMixin:
             kind=kind,
             default_mode=mode,
             default_target_seconds=target,
-            is_favorite=(list_id == LIST_FAVORITES_ID),
+            is_favorite=self._create_is_favorite or list_id == LIST_FAVORITES_ID,
         )
         self._tasks_svc.set_parent(
             task.id, self._draft_parent_id if self._draft_parent_id else None
@@ -286,6 +295,7 @@ class DialogsMixin:
         self._edit_task_id = task.id
         self._edit_title = task.title
         self._edit_description = task.description
+        self._edit_is_favorite = task.is_favorite or task.list_id == LIST_FAVORITES_ID
         self._edit_kind = task.kind.value
         self._edit_mode = task.default_mode.value
         seconds = task.default_target_seconds or 0
@@ -323,6 +333,11 @@ class DialogsMixin:
     @Slot(str)
     def setEditDescription(self, value: str) -> None:  # noqa: N802
         self._edit_description = value
+        self.editDialogChanged.emit()
+
+    @Slot(bool)
+    def setEditFavorite(self, value: bool) -> None:  # noqa: N802
+        self._edit_is_favorite = bool(value)
         self.editDialogChanged.emit()
 
     @Slot(str)
@@ -438,6 +453,7 @@ class DialogsMixin:
             default_target_seconds=target,
             update_target=True,
             list_id=list_id,
+            is_favorite=self._edit_is_favorite or list_id == LIST_FAVORITES_ID,
         )
         self._tasks_svc.set_parent(
             self._edit_task_id,
@@ -464,7 +480,11 @@ class DialogsMixin:
         task = self._tasks_repo.get(self._edit_task_id)
         if task is None or task.list_id == LIST_FAVORITES_ID:
             return
-        self._tasks_repo.update(self._edit_task_id, list_id=LIST_FAVORITES_ID)
+        self._tasks_repo.update(
+            self._edit_task_id,
+            list_id=LIST_FAVORITES_ID,
+            is_favorite=True,
+        )
         self._edit_open = False
         self.editDialogChanged.emit()
         self.refresh_tasks()

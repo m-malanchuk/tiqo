@@ -20,6 +20,13 @@ AppToolWindow {
         }
     }
 
+    FormCheckBox {
+        text: t("action.add_to_favorites")
+        checked: app.editIsFavorite
+        enabled: app.editListId !== 1
+        onClicked: app.setEditFavorite(checked)
+    }
+
     FormField {
         label: t("field.group")
         hint: t("hint.edit_group")

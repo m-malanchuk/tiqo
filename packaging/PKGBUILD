@@ -1,14 +1,14 @@
 # Arch Linux package for tiqo and its Plasma widget.
 #
 # This PKGBUILD expects a source archive beside it.  From a clean checkout:
-#   git archive --format=tar.gz --prefix=tiqo-0.1.0/ -o packaging/tiqo-0.1.0.tar.gz HEAD
+#   git archive --format=tar.gz --prefix=tiqo-0.1.2/ -o packaging/tiqo-0.1.2.tar.gz HEAD
 #   (cd packaging && makepkg -Csi -p PKGBUILD)
 #
 # The archive is intentionally local: tiqo is a personal application and is
 # not published to a remote package repository.
 
 pkgname=tiqo
-pkgver=0.1.1
+pkgver=0.1.2
 pkgrel=1
 pkgdesc='Personal time tracker for KDE Plasma'
 arch=('any')

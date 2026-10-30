@@ -18,7 +18,7 @@ quality:
   image: python:3.12-bookworm
   before_script:
     - apt-get update
-    - apt-get install -y --no-install-recommends libgl1 libegl1 libdbus-1-3 libxkbcommon0
+    - apt-get install -y --no-install-recommends libgl1 libegl1 libdbus-1-3 libxkbcommon0 nodejs
     - python -m pip install --no-cache-dir uv
     - uv sync --frozen
   script:

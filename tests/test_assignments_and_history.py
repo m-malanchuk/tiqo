@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
+import pytest
 import time_machine
 from app.application.task_presentation import seed_tasks_for_list
-from app.domain.models import LIST_FAVORITES_ID, LIST_TODAY_ID, TaskKind
+from app.domain.models import LIST_FAVORITES_ID, LIST_TODAY_ID, TaskKind, TimerMode
 from app.services.task_service import TaskService
 from app.services.timer_engine import TimerEngine
 from app.storage.assignment_repo import AssignmentRepo
@@ -63,6 +64,46 @@ def test_manual_assignment_is_date_specific_and_completed_today_disappears() -> 
             completion_repo=completions,
         )
         assert seed_tomorrow == []
+
+
+@pytest.mark.parametrize("mode", [TimerMode.STOPWATCH, TimerMode.COUNTDOWN])
+def test_timed_stop_removes_today_task_but_pause_does_not(mode: TimerMode) -> None:
+    conn = make_db()
+    task = TaskRepo(conn).create(
+        LIST_FAVORITES_ID,
+        "Timed task",
+        default_mode=mode,
+        default_target_seconds=60 if mode is TimerMode.COUNTDOWN else None,
+    )
+    assignments = AssignmentRepo(conn)
+    assignments.assign(task.id, T0.date())
+    completions = CompletionRepo(conn)
+    engine = TimerEngine(conn)
+
+    def today_ids() -> list[int]:
+        return [
+            row.id
+            for row in seed_tasks_for_list(
+                selected_list_id=LIST_TODAY_ID,
+                lists_repo=ListRepo(conn),
+                tasks_repo=TaskRepo(conn),
+                work_repo=WorkRepo(conn),
+                recurrence_repo=RecurrenceRepo(conn),
+                assignment_repo=assignments,
+                completion_repo=completions,
+            )
+        ]
+
+    with time_machine.travel(T0, tick=False) as clock:
+        engine.start(task.id, use_task_default=True)
+        clock.shift(timedelta(seconds=10))
+        engine.pause(task.id)
+        assert today_ids() == [task.id]
+
+        engine.resume(task.id)
+        clock.shift(timedelta(seconds=10))
+        engine.stop(task.id)
+        assert today_ids() == []
 
 
 def test_completion_history_edit_does_not_change_source_session() -> None:

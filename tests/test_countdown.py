@@ -7,9 +7,10 @@ from datetime import UTC, datetime, timedelta
 import pytest
 import time_machine
 from app.domain.formatting import format_session_clock
-from app.domain.models import LIST_FAVORITES_ID, TimerMode
+from app.domain.models import LIST_FAVORITES_ID, LIST_TODAY_ID, TimerMode
 from app.services.notifier import RecordingNotifier
 from app.services.timer_engine import TimerEngine
+from app.storage.assignment_repo import AssignmentRepo
 from app.storage.task_repo import TaskRepo
 from app.storage.work_repo import WorkRepo
 from app.ui.viewmodels.app_view_model import AppViewModel
@@ -62,10 +63,13 @@ def test_one_minute_timer_notifies_once_and_stops(qapp: QCoreApplication) -> Non
         default_mode=TimerMode.COUNTDOWN,
         default_target_seconds=60,
     )
+    AssignmentRepo(conn).assign(task.id, T0.date())
     notifier = RecordingNotifier()
     vm = AppViewModel(conn, notifier=notifier)
 
     with time_machine.travel(T0, tick=False) as clock:
+        vm.selectList(LIST_TODAY_ID)
+        assert vm.tasks_model().rowCount() == 1
         vm.startTask(task.id)
         vm.confirmStart()
         clock.shift(timedelta(seconds=60))
@@ -74,6 +78,7 @@ def test_one_minute_timer_notifies_once_and_stops(qapp: QCoreApplication) -> Non
         assert notifier.calls[0][0] == "Pomodoro"
         assert vm.engine.open_session_for(task.id) is None
         assert WorkRepo(conn).get(task.id) is None
+        assert vm.tasks_model().rowCount() == 0
         clock.shift(timedelta(seconds=12))
         vm.tick()
         assert len(notifier.calls) == 1

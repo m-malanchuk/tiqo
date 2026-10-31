@@ -1048,9 +1048,9 @@ class AppViewModel(DialogsMixin, QObject):
 
     @Slot()
     def tick(self) -> None:
-        self._handle_target_reached()
+        target_reached = self._handle_target_reached()
         self.refresh_work()
-        if self._work_repo.list_all():
+        if target_reached or self._work_repo.list_all():
             self.refresh_tasks()
 
     @Slot()
@@ -1139,8 +1139,9 @@ class AppViewModel(DialogsMixin, QObject):
             self._work_fingerprint = fingerprint
             self.workChanged.emit()
 
-    def _handle_target_reached(self) -> None:
-        for event in self._engine.poll_target_reached():
+    def _handle_target_reached(self) -> bool:
+        events = self._engine.poll_target_reached()
+        for event in events:
             task = self._tasks_repo.get(event.task_id)
             title = task.title if task else f"#{event.task_id}"
             sound = (
@@ -1154,6 +1155,7 @@ class AppViewModel(DialogsMixin, QObject):
                     event.task_id,
                     completion_kind=CompletionKind.TARGET_REACHED,
                 )
+        return bool(events)
 
     def _ensure_default_settings(self) -> None:
         # Full defaults live in SettingsBridge; keep timer sound for headless/tests.

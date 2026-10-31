@@ -156,6 +156,23 @@ class CompletionRepo:
         ).fetchall()
         return {int(row["task_id"]) for row in rows}
 
+    def task_ids_timed_completed_on(self, day: date) -> set[int]:
+        """Return timed tasks that have a closed session completed on ``day``.
+
+        A session completion is deliberately identified by its non-null
+        ``session_id`` rather than by the completion kind.  That keeps the
+        Today projection correct for every timer completion kind while
+        keeping checklist executions (which have no session) separate.
+        """
+        rows = self._conn.execute(
+            """
+            SELECT DISTINCT task_id FROM task_completions
+            WHERE completion_date = ? AND session_id IS NOT NULL
+            """,
+            (date_to_db(day),),
+        ).fetchall()
+        return {int(row["task_id"]) for row in rows}
+
     def count_checklist_on(self, day: date, task_ids: set[int] | None = None) -> int:
         sql = """
             SELECT COUNT(*) AS n FROM task_completions

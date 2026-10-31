@@ -115,9 +115,10 @@ def seed_tasks_for_list(
         }
         assigned_ids = set(assignment_repo.task_ids_on(today)) if assignment_repo else set()
         ids = sorted(recurring_ids | assigned_ids)
-        completed_today = (
-            completion_repo.task_ids_checklist_completed_on(today) if completion_repo else set()
-        )
+        completed_today: set[int] = set()
+        if completion_repo is not None:
+            completed_today.update(completion_repo.task_ids_checklist_completed_on(today))
+            completed_today.update(completion_repo.task_ids_timed_completed_on(today))
         ids = [task_id for task_id in ids if task_id not in completed_today]
         return tasks_repo.list_by_ids(ids)
     if selected_list_id == LIST_IN_WORK_ID:

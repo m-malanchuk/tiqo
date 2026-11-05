@@ -164,9 +164,17 @@ def main() -> int:
 
     # IPC for Plasma widget / scripts (best-effort; app runs without it).
     facade = SessionFacade(conn, engine=view_model.engine)
+
+    def request_checklist_completion(task_id: int) -> str:
+        prompted = view_model.requestChecklistCompletion(int(task_id))
+        if prompted:
+            bridge.showWindow()
+        return "ok"
+
     dbus_api = register_tiqo_dbus(
         facade,
         on_show_window=bridge.showWindow,
+        on_request_checklist_completion=request_checklist_completion,
         parent=app,
     )
     if dbus_api is not None:

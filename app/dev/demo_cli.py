@@ -26,7 +26,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Showcase DB ready: {path}")
     print(
         "Contains: дерево Английский, «Сегодня» (daily/weekly/monthly), "
-        "«В работе» (те же задачи), Помодоро, чек-лист с выполненным/открытым примером."
+        "«В работе» (те же задачи), Помодоро, чек-листы с выполненным/открытым "
+        "примером и несколькими задачами на сегодня."
     )
 
     if args.run and not args.seed_only:

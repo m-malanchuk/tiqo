@@ -75,6 +75,7 @@ class AppViewModel(DialogsMixin, QObject):
     historyNoteDialogChanged = Signal()
     scheduleDialogChanged = Signal()
     sessionNoteDialogChanged = Signal()
+    checklistCompletionDialogChanged = Signal()
 
     def __init__(
         self,
@@ -127,6 +128,10 @@ class AppViewModel(DialogsMixin, QObject):
         self._session_note_task_id = 0
         self._session_note_task_title = ""
         self._session_note = ""
+        self._checklist_completion_open = False
+        self._checklist_completion_task_id = 0
+        self._checklist_completion_task_title = ""
+        self._checklist_completion_note = ""
 
         self._selected_list_id = LIST_ALL_ID
         self._status = ""
@@ -141,6 +146,7 @@ class AppViewModel(DialogsMixin, QObject):
         self._create_title = ""
         self._create_description = ""
         self._create_is_favorite = False
+        self._create_prompt_completion_note = False
         self._create_kind = TaskKind.TIMED.value
         self._create_mode = TimerMode.STOPWATCH.value
         self._create_hours = 0
@@ -162,6 +168,7 @@ class AppViewModel(DialogsMixin, QObject):
         self._edit_title = ""
         self._edit_description = ""
         self._edit_is_favorite = False
+        self._edit_prompt_completion_note = False
         self._edit_kind = TaskKind.TIMED.value
         self._edit_mode = TimerMode.STOPWATCH.value
         self._edit_hours = 0
@@ -223,6 +230,18 @@ class AppViewModel(DialogsMixin, QObject):
     @Property(str, notify=historyNoteDialogChanged)
     def historyNote(self) -> str:  # noqa: N802
         return self._history_note
+
+    @Property(bool, notify=checklistCompletionDialogChanged)
+    def checklistCompletionDialogOpen(self) -> bool:  # noqa: N802
+        return self._checklist_completion_open
+
+    @Property(str, notify=checklistCompletionDialogChanged)
+    def checklistCompletionTaskTitle(self) -> str:  # noqa: N802
+        return self._checklist_completion_task_title
+
+    @Property(str, notify=checklistCompletionDialogChanged)
+    def checklistCompletionNote(self) -> str:  # noqa: N802
+        return self._checklist_completion_note
 
     @Property(str, notify=historyDialogChanged)
     def historyQuery(self) -> str:  # noqa: N802
@@ -340,6 +359,10 @@ class AppViewModel(DialogsMixin, QObject):
     def createIsFavorite(self) -> bool:  # noqa: N802
         return self._create_is_favorite
 
+    @Property(bool, notify=createDialogChanged)
+    def createPromptCompletionNote(self) -> bool:  # noqa: N802
+        return self._create_prompt_completion_note
+
     @Property(str, notify=createDialogChanged)
     def createKind(self) -> str:  # noqa: N802
         return self._create_kind
@@ -449,6 +472,10 @@ class AppViewModel(DialogsMixin, QObject):
     @Property(bool, notify=editDialogChanged)
     def editIsFavorite(self) -> bool:  # noqa: N802
         return self._edit_is_favorite
+
+    @Property(bool, notify=editDialogChanged)
+    def editPromptCompletionNote(self) -> bool:  # noqa: N802
+        return self._edit_prompt_completion_note
 
     @Property(str, notify=editDialogChanged)
     def editRecurrenceKind(self) -> str:  # noqa: N802
@@ -563,31 +590,6 @@ class AppViewModel(DialogsMixin, QObject):
         self.refresh_tasks()
         self.refresh_work()
         self._set_status(tr("status.stopped", title=title))
-
-    @Slot(int)
-    def completeChecklist(self, task_id: int) -> None:  # noqa: N802
-        """Record one binary execution without creating a timer session."""
-        try:
-            task = self._tasks_svc.complete_checklist(int(task_id))
-        except (KeyError, ValueError) as exc:
-            self._set_status(str(exc))
-            return
-        self.refresh_tasks()
-        self.refresh_work()
-        self._set_status(tr("status.completed", title=task.title))
-
-    @Slot(int)
-    def toggleChecklist(self, task_id: int) -> None:  # noqa: N802
-        """Correct a checklist state without being used for normal execution."""
-        try:
-            task = self._tasks_svc.toggle_checklist(int(task_id))
-        except (KeyError, ValueError) as exc:
-            self._set_status(str(exc))
-            return
-        self.refresh_tasks()
-        self.refresh_work()
-        status_key = "status.completed" if task.is_completed else "status.uncompleted"
-        self._set_status(tr(status_key, title=task.title))
 
     @Slot(int)
     def toggleTodayAssignment(self, task_id: int) -> None:  # noqa: N802
@@ -1080,6 +1082,7 @@ class AppViewModel(DialogsMixin, QObject):
         self.historyDialogChanged.emit()
         self.historyNoteDialogChanged.emit()
         self.sessionNoteDialogChanged.emit()
+        self.checklistCompletionDialogChanged.emit()
 
     def refresh_lists(self) -> None:
         raw = self._lists_repo.list_all()

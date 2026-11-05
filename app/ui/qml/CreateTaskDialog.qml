@@ -79,6 +79,13 @@ AppToolWindow {
         }
     }
 
+    FormCheckBox {
+        visible: app.createKind === "checklist"
+        text: t("field.prompt_completion_note")
+        checked: app.createPromptCompletionNote
+        onClicked: app.setCreatePromptCompletionNote(checked)
+    }
+
     ColumnLayout {
         visible: app.createKind === "timed"
         spacing: Math.max(2, ui.padSm / 2)

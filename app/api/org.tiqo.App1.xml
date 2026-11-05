@@ -40,11 +40,7 @@
       <arg name="task_id" type="i" direction="in"/>
       <arg type="s" direction="out"/>
     </method>
-    <method name="ToggleChecklist">
-      <arg name="task_id" type="i" direction="in"/>
-      <arg type="s" direction="out"/>
-    </method>
-    <method name="CompleteChecklist">
+    <method name="RequestChecklistCompletion">
       <arg name="task_id" type="i" direction="in"/>
       <arg type="s" direction="out"/>
     </method>

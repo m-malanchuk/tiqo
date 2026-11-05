@@ -182,11 +182,6 @@ def build_task_rows(
             has_children=node.has_children,
             is_expanded=node.task.id not in collapsed_task_ids,
             kind=node.task.kind.value,
-            is_completed=(
-                False
-                if today_occurrence and node.task.kind is TaskKind.CHECKLIST
-                else node.task.is_completed
-            ),
             can_complete=node.task.kind is TaskKind.CHECKLIST,
             is_scheduled_today=(node.task.id in today_ids),
         )

@@ -15,5 +15,6 @@ def test_checklist_completion_is_rendered_as_repeatable_action() -> None:
 
     assert 'const checklistAction = kind === "checklist";' in main_qml
     assert re.search(r"progress:\s*checklistAction\s*\?\s*0", main_qml)
-    assert "is_completed: checklistAction ? false" in main_qml
+    assert "RequestChecklistCompletion" in main_qml
+    assert "CompleteChecklist" not in main_qml
     assert 'text: "☐"' in delegate_qml

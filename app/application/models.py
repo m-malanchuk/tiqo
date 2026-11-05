@@ -23,7 +23,6 @@ class TaskRow:
     has_children: bool
     is_expanded: bool
     kind: str = "timed"
-    is_completed: bool = False
     can_complete: bool = False
     is_scheduled_today: bool = False
 

@@ -19,14 +19,13 @@ Item {
     readonly property bool canPause: !!(item && item.can_pause)
     readonly property bool canStop: !!(item && item.can_stop)
     readonly property bool checklist: !!(item && item.kind === "checklist")
-    readonly property bool completed: !!(item && item.is_completed)
 
     // Countdown: elapsed/target. Stopwatch / no target: always full.
     readonly property real progressValue: {
         if (!item)
             return 0;
         if (root.checklist)
-            return root.completed ? 1 : 0;
+            return 0;
         if (!item.is_countdown)
             return 1;
         if (item.progress === null || item.progress === undefined)
@@ -130,11 +129,11 @@ Item {
 
             PlasmaComponents.ToolButton {
                 visible: root.checklist
-                // CompleteChecklist records a new execution; it is not a toggle.
+                // Checklist completion records a new execution; it is not a toggle.
                 text: "☐"
                 display: PlasmaComponents.AbstractButton.TextOnly
                 PlasmaComponents.ToolTip.text: "Выполнить"
-                onClicked: plasmoidItem.completeChecklist(item.task_id)
+                onClicked: plasmoidItem.requestChecklistCompletion(item.task_id)
             }
         }
 

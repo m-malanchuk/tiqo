@@ -18,7 +18,7 @@ else
   exit 1
 fi
 
-echo "== 1/4 remove all ${ID} instances from desktop + panels =="
+echo "== 1/5 remove all ${ID} instances from desktop + panels =="
 REMOVE_SCRIPT=$(cat <<'EOF'
 var id = "org.tiqo.work";
 var removed = 0;
@@ -58,7 +58,7 @@ EOF
 )
 "${QDBUS[@]}" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "${REMOVE_SCRIPT}"
 
-echo "== 2/4 wipe plasmashell QML cache =="
+echo "== 2/5 wipe plasmashell QML cache =="
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/plasmashell"
 if [[ -d "${CACHE}/qmlcache" ]]; then
   rm -rf "${CACHE}/qmlcache"
@@ -68,14 +68,17 @@ fi
 # Also drop plasmawindowed cache so previews stay honest
 rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/plasmawindowed/qmlcache" 2>/dev/null || true
 
-echo "== 3/4 reinstall package =="
+echo "== 3/5 reinstall package =="
 bash "${ROOT}/install-dev.sh"
 
-echo "== 4/4 add one fresh instance to the first panel =="
+echo "== 4/5 add one fresh instance to the first panel =="
 bash "${ROOT}/add-to-panel.sh"
 
+echo "== 5/5 restart plasmashell =="
+# Always restart the shell so it cannot retain an older QML engine or D-Bus
+# call path after a widget reset.
+kquitapp6 plasmashell || true
+kstart plasmashell
+
 echo
-echo "Check the panel popup: titles should show [1], [2], … and «В работе [N]»."
-echo "If it is STILL old, plasmashell has the old engine pinned — only then:"
-echo "  kquitapp6 plasmashell && kstart plasmashell"
-echo "(that restarts the shell UI, not the whole session/login)."
+echo "Plasmashell restarted. Check the panel popup after it returns."

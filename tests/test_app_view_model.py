@@ -16,6 +16,7 @@ from app.domain.models import (
     TimerMode,
 )
 from app.services.task_service import TaskService
+from app.storage.completion_repo import CompletionRepo
 from app.storage.task_repo import TaskRepo
 from app.ui.viewmodels.app_view_model import AppViewModel
 from app.ui.viewmodels.task_model import TaskModel
@@ -114,7 +115,9 @@ def test_create_with_parent_and_start_dialog(seeded: tuple[SeedResult, AppViewMo
         vm.stopTask(child_id)
 
 
-def test_create_and_toggle_checklist(seeded: tuple[SeedResult, AppViewModel]) -> None:
+def test_checklist_completion_is_repeatable_and_keeps_task_open(
+    seeded: tuple[SeedResult, AppViewModel],
+) -> None:
     seed, vm = seeded
     with time_machine.travel(T0, tick=False):
         vm.openCreateDialog()
@@ -125,12 +128,40 @@ def test_create_and_toggle_checklist(seeded: tuple[SeedResult, AppViewModel]) ->
         assert task.kind is TaskKind.CHECKLIST
         assert vm.engine.open_session_for(task.id) is None
 
-        vm.toggleChecklist(task.id)
-        completed = TaskRepo(seed.conn).get(task.id)
-        assert completed is not None and completed.is_completed
-        vm.toggleChecklist(task.id)
-        uncompleted = TaskRepo(seed.conn).get(task.id)
-        assert uncompleted is not None and not uncompleted.is_completed
+        assert vm.requestChecklistCompletion(task.id) is False
+        assert vm.requestChecklistCompletion(task.id) is False
+        assert TaskRepo(seed.conn).get(task.id) is not None
+        assert len(CompletionRepo(seed.conn).list_for_task(task.id)) == 2
+
+
+def test_checklist_completion_note_dialog_is_optional(
+    seeded: tuple[SeedResult, AppViewModel],
+) -> None:
+    seed, vm = seeded
+    with time_machine.travel(T0, tick=False):
+        vm.openCreateDialog()
+        vm.setCreateTitle("Подробный отчёт")
+        vm.setCreateKind(TaskKind.CHECKLIST.value)
+        vm.setCreatePromptCompletionNote(True)
+        vm.submitCreateDialog()
+        task = next(t for t in TaskRepo(seed.conn).list_all() if t.title == "Подробный отчёт")
+        assert task.prompt_completion_note is True
+
+        assert vm.requestChecklistCompletion(task.id) is True
+        assert vm.checklistCompletionDialogOpen is True
+        assert CompletionRepo(seed.conn).list_for_task(task.id) == []
+
+        vm.setChecklistCompletionNote("Подготовил и отправил документы")
+        vm.confirmChecklistCompletion()
+        assert vm.checklistCompletionDialogOpen is False
+        events = CompletionRepo(seed.conn).list_for_task(task.id)
+        assert len(events) == 1
+        assert events[0].note == "Подготовил и отправил документы"
+
+        assert vm.requestChecklistCompletion(task.id) is True
+        vm.cancelChecklistCompletion()
+        assert vm.checklistCompletionDialogOpen is False
+        assert len(CompletionRepo(seed.conn).list_for_task(task.id)) == 1
 
 
 def test_create_task_can_be_in_group_and_favorites(

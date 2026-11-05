@@ -145,10 +145,40 @@ def seed_showcase(conn: sqlite3.Connection, *, now: datetime | None = None) -> N
         "Отправить отчёт",
         description="Демонстрация выполненной бинарной задачи.",
         kind=TaskKind.CHECKLIST,
+        prompt_completion_note=True,
         created_at=stamp - timedelta(days=2),
     )
-    task_svc.set_checklist_done(checklist_done.id, now=stamp - timedelta(days=1, hours=2))
+    task_svc.complete_checklist(
+        checklist_done.id,
+        note="Собрал данные, проверил цифры и отправил отчёт.",
+        now=stamp - timedelta(days=1, hours=2),
+    )
     assignments.assign(checklist.id, today, created_at=stamp)
+    checklist_today_note = tasks.create(
+        LIST_FAVORITES_ID,
+        "Записать итоги дня",
+        description="Чеклист на сегодня с подробной заметкой о выполнении.",
+        kind=TaskKind.CHECKLIST,
+        prompt_completion_note=True,
+        is_favorite=True,
+        created_at=stamp - timedelta(hours=5),
+    )
+    checklist_today_simple = tasks.create(
+        job.id,
+        "Проверить почту",
+        description="Чеклист на сегодня без отдельной заметки.",
+        kind=TaskKind.CHECKLIST,
+        created_at=stamp - timedelta(hours=4),
+    )
+    checklist_today_second = tasks.create(
+        job.id,
+        "Разобрать входящие задачи",
+        description="Ещё один независимый чеклист на текущую дату.",
+        kind=TaskKind.CHECKLIST,
+        created_at=stamp - timedelta(hours=3),
+    )
+    for task in (checklist_today_note, checklist_today_simple, checklist_today_second):
+        assignments.assign(task.id, today, created_at=stamp)
     assignments.assign(coding.id, today + timedelta(days=1), created_at=stamp)
 
     # Extra flat tasks so «Избранное» / «Все» need real scrolling in a small window

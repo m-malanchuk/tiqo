@@ -61,6 +61,7 @@ class DialogsMixin:
     selectionChanged: Any
     emojiPickerOpenChanged: Any
     emojiQueryChanged: Any
+    checklistCompletionDialogChanged: Any
 
     if TYPE_CHECKING:
 
@@ -76,6 +77,72 @@ class DialogsMixin:
     def setDraftParentId(self, parent_id: int) -> None:  # noqa: N802
         self._set_draft_parent(int(parent_id) if int(parent_id) > 0 else None)
         self._emit_active_dialog_parent_changed()
+
+    # ---------- Checklist completion ----------
+    @Slot(int, result=bool)
+    def requestChecklistCompletion(self, task_id: int) -> bool:  # noqa: N802
+        """Complete immediately or open the optional execution-note dialog."""
+        task = self._tasks_repo.get(int(task_id))
+        if task is None or task.kind is not TaskKind.CHECKLIST:
+            return False
+        if not task.prompt_completion_note:
+            self._complete_checklist_now(task.id)
+            return False
+        self._checklist_completion_task_id = task.id
+        self._checklist_completion_task_title = task.title
+        self._checklist_completion_note = ""
+        self._checklist_completion_open = True
+        self.checklistCompletionDialogChanged.emit()
+        return True
+
+    @Slot(str)
+    def setChecklistCompletionNote(self, value: str) -> None:  # noqa: N802
+        self._checklist_completion_note = value
+        self.checklistCompletionDialogChanged.emit()
+
+    @Slot()
+    def cancelChecklistCompletion(self) -> None:  # noqa: N802
+        self._close_checklist_completion_dialog()
+
+    @Slot()
+    def confirmChecklistCompletion(self) -> None:  # noqa: N802
+        task_id = self._checklist_completion_task_id
+        if not task_id:
+            self._close_checklist_completion_dialog()
+            return
+        task = self._tasks_repo.get(task_id)
+        if task is None:
+            self._close_checklist_completion_dialog()
+            return
+        try:
+            self._tasks_svc.complete_checklist(task_id, note=self._checklist_completion_note)
+        except (KeyError, ValueError) as exc:
+            self._set_status(str(exc))
+            return
+        self._close_checklist_completion_dialog()
+        self.refresh_tasks()
+        self.refresh_work()
+        self._set_status(tr("status.completed", title=task.title))
+
+    def _complete_checklist_now(self, task_id: int) -> None:
+        task = self._tasks_repo.get(task_id)
+        if task is None:
+            return
+        try:
+            self._tasks_svc.complete_checklist(task_id)
+        except (KeyError, ValueError) as exc:
+            self._set_status(str(exc))
+            return
+        self.refresh_tasks()
+        self.refresh_work()
+        self._set_status(tr("status.completed", title=task.title))
+
+    def _close_checklist_completion_dialog(self) -> None:
+        self._checklist_completion_open = False
+        self._checklist_completion_task_id = 0
+        self._checklist_completion_task_title = ""
+        self._checklist_completion_note = ""
+        self.checklistCompletionDialogChanged.emit()
 
     # ---------- Create ----------
     @Slot()
@@ -134,6 +201,11 @@ class DialogsMixin:
     @Slot(bool)
     def setCreateFavorite(self, value: bool) -> None:  # noqa: N802
         self._create_is_favorite = bool(value)
+        self.createDialogChanged.emit()
+
+    @Slot(bool)
+    def setCreatePromptCompletionNote(self, value: bool) -> None:  # noqa: N802
+        self._create_prompt_completion_note = bool(value)
         self.createDialogChanged.emit()
 
     @Slot(str)
@@ -218,6 +290,7 @@ class DialogsMixin:
             kind=kind,
             default_mode=mode,
             default_target_seconds=target,
+            prompt_completion_note=self._create_prompt_completion_note,
             is_favorite=self._create_is_favorite,
         )
         self._tasks_svc.set_parent(
@@ -293,6 +366,7 @@ class DialogsMixin:
         self._edit_title = task.title
         self._edit_description = task.description
         self._edit_is_favorite = task.is_favorite
+        self._edit_prompt_completion_note = task.prompt_completion_note
         self._edit_kind = task.kind.value
         self._edit_mode = task.default_mode.value
         seconds = task.default_target_seconds or 0
@@ -335,6 +409,11 @@ class DialogsMixin:
     @Slot(bool)
     def setEditFavorite(self, value: bool) -> None:  # noqa: N802
         self._edit_is_favorite = bool(value)
+        self.editDialogChanged.emit()
+
+    @Slot(bool)
+    def setEditPromptCompletionNote(self, value: bool) -> None:  # noqa: N802
+        self._edit_prompt_completion_note = bool(value)
         self.editDialogChanged.emit()
 
     @Slot(str)
@@ -449,6 +528,7 @@ class DialogsMixin:
             default_mode=mode,
             default_target_seconds=target,
             update_target=True,
+            prompt_completion_note=self._edit_prompt_completion_note,
             list_id=list_id,
             is_favorite=self._edit_is_favorite,
         )

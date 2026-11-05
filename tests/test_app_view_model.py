@@ -21,6 +21,7 @@ from app.storage.task_repo import TaskRepo
 from app.ui.viewmodels.app_view_model import AppViewModel
 from app.ui.viewmodels.task_model import TaskModel
 from PySide6.QtCore import QCoreApplication
+from PySide6.QtTest import QSignalSpy
 
 from tests.support.db import SeedResult, seed_demo
 
@@ -70,6 +71,25 @@ def test_defaults_to_all(seeded: tuple[SeedResult, AppViewModel]) -> None:
         assert "Избранное" not in picker_titles
         assert any("Без группы" in title for title in picker_titles)
         vm.closeCreateDialog()
+
+
+def test_dialog_text_setters_ignore_unchanged_values(
+    seeded: tuple[SeedResult, AppViewModel],
+) -> None:
+    _, vm = seeded
+    with time_machine.travel(T0, tick=False):
+        vm.openCreateDialog()
+        create_spy = QSignalSpy(vm.createDialogChanged)
+        vm.setCreateTitle(vm._create_title)
+        vm.setCreateDescription(vm._create_description)
+        assert create_spy.count() == 0
+
+        task_id = _task_id_by_title(vm, "Код")
+        vm.openEditDialog(task_id)
+        edit_spy = QSignalSpy(vm.editDialogChanged)
+        vm.setEditTitle(vm._edit_title)
+        vm.setEditDescription(vm._edit_description)
+        assert edit_spy.count() == 0
 
 
 def test_create_without_checkbox_is_not_favorite(seeded: tuple[SeedResult, AppViewModel]) -> None:

@@ -97,6 +97,8 @@ class DialogsMixin:
 
     @Slot(str)
     def setChecklistCompletionNote(self, value: str) -> None:  # noqa: N802
+        if value == self._checklist_completion_note:
+            return
         self._checklist_completion_note = value
         self.checklistCompletionDialogChanged.emit()
 
@@ -190,11 +192,15 @@ class DialogsMixin:
 
     @Slot(str)
     def setCreateTitle(self, value: str) -> None:  # noqa: N802
+        if value == self._create_title:
+            return
         self._create_title = value
         self.createDialogChanged.emit()
 
     @Slot(str)
     def setCreateDescription(self, value: str) -> None:  # noqa: N802
+        if value == self._create_description:
+            return
         self._create_description = value
         self.createDialogChanged.emit()
 
@@ -330,11 +336,15 @@ class DialogsMixin:
 
     @Slot(str)
     def setListName(self, value: str) -> None:  # noqa: N802
+        if value == self._list_name:
+            return
         self._list_name = value
         self.listDialogChanged.emit()
 
     @Slot(str)
     def setListDescription(self, value: str) -> None:  # noqa: N802
+        if value == self._list_description:
+            return
         self._list_description = value
         self.listDialogChanged.emit()
 
@@ -398,11 +408,15 @@ class DialogsMixin:
 
     @Slot(str)
     def setEditTitle(self, value: str) -> None:  # noqa: N802
+        if value == self._edit_title:
+            return
         self._edit_title = value
         self.editDialogChanged.emit()
 
     @Slot(str)
     def setEditDescription(self, value: str) -> None:  # noqa: N802
+        if value == self._edit_description:
+            return
         self._edit_description = value
         self.editDialogChanged.emit()
 
@@ -672,6 +686,8 @@ class DialogsMixin:
 
     @Slot(str)
     def setStartNote(self, value: str) -> None:  # noqa: N802
+        if value == self._start_note:
+            return
         self._start_note = value
         self.startDialogChanged.emit()
 
@@ -727,6 +743,8 @@ class DialogsMixin:
 
     @Slot(str)
     def setEmojiQuery(self, value: str) -> None:  # noqa: N802
+        if value == self._emoji_query:
+            return
         self._emoji_query = value
         self._emoji_model.set_query(value)
         self.emojiQueryChanged.emit()

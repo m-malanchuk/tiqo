@@ -199,20 +199,26 @@ PlasmoidItem {
     }
 
     function normalizeTaskRow(row) {
+        const kind = String(row.kind || "timed");
+        const checklistAction = kind === "checklist";
         return {
             task_id: Number(row.task_id),
             title: String(row.title || ""),
             state: String(row.state || ""),
             clock: String(row.clock || ""),
             is_countdown: !!row.is_countdown,
-            progress: (row.progress === null || row.progress === undefined) ? -1 : Number(row.progress),
+            progress: checklistAction
+                ? 0
+                : ((row.progress === null || row.progress === undefined) ? -1 : Number(row.progress)),
             can_start: !!row.can_start,
             can_pause: !!row.can_pause,
             can_stop: !!row.can_stop,
             depth: Number(row.depth) || 0,
             blocked_by_descendant: !!row.blocked_by_descendant,
-            kind: String(row.kind || "timed"),
-            is_completed: !!row.is_completed,
+            kind: kind,
+            // CompleteChecklist records an execution; the widget does not expose
+            // the separate persistent ToggleChecklist state.
+            is_completed: checklistAction ? false : !!row.is_completed,
             can_complete: !!row.can_complete,
         };
     }

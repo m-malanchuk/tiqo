@@ -130,9 +130,10 @@ Item {
 
             PlasmaComponents.ToolButton {
                 visible: root.checklist
-                text: "✓"
+                // CompleteChecklist records a new execution; it is not a toggle.
+                text: "☐"
                 display: PlasmaComponents.AbstractButton.TextOnly
-                PlasmaComponents.ToolTip.text: root.completed ? "Выполнить ещё раз" : "Выполнить"
+                PlasmaComponents.ToolTip.text: "Выполнить"
                 onClicked: plasmoidItem.completeChecklist(item.task_id)
             }
         }

@@ -12,7 +12,7 @@ from app.storage.transaction import write
 _TASK_COLS = """
     id, list_id, title, description, default_mode, default_target_seconds,
     is_favorite, is_archived, created_at, parent_task_id,
-    task_kind, checklist_done, checklist_completed_at
+    task_kind, prompt_completion_note
 """
 
 
@@ -126,6 +126,7 @@ class TaskRepo:
         default_mode: TimerMode | None = None,
         default_target_seconds: int | None = None,
         update_target: bool = False,
+        prompt_completion_note: bool | None = None,
         is_archived: bool | None = None,
         list_id: int | None = None,
         is_favorite: bool | None = None,
@@ -143,16 +144,17 @@ class TaskRepo:
         new_list_id = task.list_id if list_id is None else list_id
         new_favorite = task.is_favorite if is_favorite is None else is_favorite
 
+        new_prompt_completion_note = (
+            task.prompt_completion_note
+            if prompt_completion_note is None
+            else bool(prompt_completion_note)
+        )
         if new_kind is TaskKind.CHECKLIST:
             new_mode = TimerMode.STOPWATCH
             new_target = None
-            new_checklist_done = task.is_completed
-            new_checklist_completed_at = task.completed_at
         else:
-            # A task changed back to timed must not resurrect a stale binary
-            # completion if it is later switched to checklist again.
-            new_checklist_done = False
-            new_checklist_completed_at = None
+            # The prompt option only applies to checklist executions.
+            new_prompt_completion_note = False
 
         with write(self._conn):
             self._conn.execute(
@@ -166,8 +168,7 @@ class TaskRepo:
                     default_target_seconds = ?,
                     is_favorite = ?,
                     is_archived = ?,
-                    checklist_done = ?,
-                    checklist_completed_at = ?
+                    prompt_completion_note = ?
                 WHERE id = ?
                 """,
                 (
@@ -179,40 +180,7 @@ class TaskRepo:
                     new_target,
                     int(new_favorite),
                     int(new_archived),
-                    int(new_checklist_done),
-                    None
-                    if new_checklist_completed_at is None
-                    else dt_to_db(new_checklist_completed_at),
-                    task_id,
-                ),
-            )
-        updated = self.get(task_id)
-        assert updated is not None
-        return updated
-
-    def set_checklist_state(
-        self,
-        task_id: int,
-        *,
-        is_completed: bool,
-        completed_at: datetime | None,
-    ) -> Task:
-        """Persist the current binary state without touching task metadata."""
-        task = self.get(task_id)
-        if task is None:
-            raise KeyError(f"Task {task_id} not found")
-        if task.kind is not TaskKind.CHECKLIST:
-            raise ValueError("Only checklist tasks have a completion state")
-        with write(self._conn):
-            self._conn.execute(
-                """
-                UPDATE tasks
-                SET checklist_done = ?, checklist_completed_at = ?
-                WHERE id = ?
-                """,
-                (
-                    int(is_completed),
-                    None if completed_at is None else dt_to_db(completed_at),
+                    int(new_prompt_completion_note),
                     task_id,
                 ),
             )
@@ -229,6 +197,7 @@ class TaskRepo:
         kind: TaskKind = TaskKind.TIMED,
         default_mode: TimerMode = TimerMode.STOPWATCH,
         default_target_seconds: int | None = None,
+        prompt_completion_note: bool = False,
         is_favorite: bool | None = None,
         created_at: datetime | None = None,
         parent_task_id: int | None = None,
@@ -248,8 +217,8 @@ class TaskRepo:
                 INSERT INTO tasks (
                     list_id, title, description, default_mode, default_target_seconds,
                     is_favorite, is_archived, created_at, parent_task_id,
-                    task_kind, checklist_done, checklist_completed_at
-                ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, 0, NULL)
+                    task_kind, prompt_completion_note
+                ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
                 """,
                 (
                     list_id,
@@ -261,6 +230,7 @@ class TaskRepo:
                     dt_to_db(created),
                     parent_task_id,
                     kind.value,
+                    int(prompt_completion_note) if kind is TaskKind.CHECKLIST else 0,
                 ),
             )
             task_id = cur.lastrowid
@@ -287,10 +257,5 @@ def _task_from_row(row: sqlite3.Row) -> Task:
         is_archived=bool(row["is_archived"]),
         created_at=dt_from_db(str(row["created_at"])),
         parent_task_id=None if parent_raw is None else int(parent_raw),
-        is_completed=bool(row["checklist_done"]),
-        completed_at=(
-            None
-            if row["checklist_completed_at"] is None
-            else dt_from_db(str(row["checklist_completed_at"]))
-        ),
+        prompt_completion_note=bool(row["prompt_completion_note"]),
     )

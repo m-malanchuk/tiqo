@@ -192,7 +192,7 @@ PlasmoidItem {
         const m = String(msg || "");
         if (m.indexOf("ListLists") >= 0 || m.indexOf("ListTasks") >= 0 || m.indexOf("TodayStats") >= 0
             || m.indexOf("Unknown method") >= 0 || m.indexOf("No such method") >= 0) {
-            root.lastError = i18n("tiqo is too old for this widget — restart the app (need D-Bus API v5).");
+            root.lastError = i18n("tiqo is too old for this widget — restart the app (need D-Bus API v6).");
             return true;
         }
         return false;
@@ -216,9 +216,6 @@ PlasmoidItem {
             depth: Number(row.depth) || 0,
             blocked_by_descendant: !!row.blocked_by_descendant,
             kind: kind,
-            // CompleteChecklist records an execution; the widget does not expose
-            // the separate persistent ToggleChecklist state.
-            is_completed: checklistAction ? false : !!row.is_completed,
             can_complete: !!row.can_complete,
         };
     }
@@ -262,7 +259,6 @@ PlasmoidItem {
             model.setProperty(i, "depth", row.depth);
             model.setProperty(i, "blocked_by_descendant", row.blocked_by_descendant);
             model.setProperty(i, "kind", row.kind);
-            model.setProperty(i, "is_completed", row.is_completed);
             model.setProperty(i, "can_complete", row.can_complete);
         }
     }
@@ -394,8 +390,8 @@ PlasmoidItem {
         });
     }
 
-    function completeChecklist(taskId) {
-        callTiqo("CompleteChecklist", [new DBus.int32(taskId)], "(i)", (value) => {
+    function requestChecklistCompletion(taskId) {
+        callTiqo("RequestChecklistCompletion", [new DBus.int32(taskId)], "(i)", (value) => {
             if (typeof value === "string" && value.indexOf("error:") === 0)
                 root.lastError = value;
             root.refreshAll();

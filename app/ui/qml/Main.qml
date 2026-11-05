@@ -50,6 +50,7 @@ ApplicationWindow {
     HistoryNoteDialog { id: historyNoteDialog }
     ScheduleDialog { id: scheduleDialog }
     SessionNoteDialog { id: sessionNoteDialog }
+    ChecklistCompletionDialog { id: checklistCompletionDialog }
 
     Connections {
         target: app
@@ -82,6 +83,10 @@ ApplicationWindow {
         }
         function onSessionNoteDialogOpenChanged() {
             if (app.sessionNoteDialogOpen) sessionNoteDialog.open(); else sessionNoteDialog.close()
+        }
+        function onChecklistCompletionDialogChanged() {
+            if (app.checklistCompletionDialogOpen) checklistCompletionDialog.open();
+            else checklistCompletionDialog.close()
         }
     }
 

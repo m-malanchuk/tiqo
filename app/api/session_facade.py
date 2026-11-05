@@ -18,7 +18,6 @@ from app.application.task_presentation import (
 from app.domain.models import LIST_FAVORITES_ID, LIST_IN_WORK_ID, LIST_TODAY_ID
 from app.domain.timeutil import local_today
 from app.i18n import list_title
-from app.services.task_service import TaskService
 from app.services.timer_engine import (
     HierarchyConflictError,
     NoActiveSessionError,
@@ -76,7 +75,6 @@ class TaskSnapshot:
     blocked_by_descendant: bool
     has_children: bool
     kind: str
-    is_completed: bool
     can_complete: bool
 
 
@@ -99,7 +97,6 @@ class SessionFacade:
         self._conn = conn
         self._engine = engine or TimerEngine(conn)
         self._tasks = TaskRepo(conn)
-        self._task_service = TaskService(conn)
         self._work = WorkRepo(conn)
         self._lists = ListRepo(conn)
         self._recurrence = RecurrenceRepo(conn)
@@ -193,9 +190,7 @@ class SessionFacade:
                     clock=row.time_today,
                     is_countdown=bool(work.is_countdown) if work else False,
                     progress=(
-                        (1.0 if row.is_completed else 0.0)
-                        if row.kind == "checklist"
-                        else (work.progress if work else None)
+                        0.0 if row.kind == "checklist" else (work.progress if work else None)
                     ),
                     can_start=row.can_start and not (work.blocked_by_descendant if work else False),
                     can_pause=row.can_pause,
@@ -204,7 +199,6 @@ class SessionFacade:
                     blocked_by_descendant=bool(work.blocked_by_descendant) if work else False,
                     has_children=bool(row.has_children) if lid == LIST_IN_WORK_ID else False,
                     kind=row.kind,
-                    is_completed=row.is_completed,
                     can_complete=row.can_complete,
                 )
             )
@@ -278,14 +272,6 @@ class SessionFacade:
 
     def stop(self, task_id: int) -> None:
         self._engine.stop(task_id)
-        self._notify()
-
-    def toggle_checklist(self, task_id: int) -> None:
-        self._task_service.toggle_checklist(int(task_id))
-        self._notify()
-
-    def complete_checklist(self, task_id: int) -> None:
-        self._task_service.complete_checklist(int(task_id))
         self._notify()
 
     def _notify(self) -> None:

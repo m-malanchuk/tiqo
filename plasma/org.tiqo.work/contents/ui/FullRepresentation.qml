@@ -81,7 +81,6 @@ Item {
             can_pause: false,
             can_stop: true,
             kind: "timed",
-            is_completed: false,
             can_complete: false,
         })
         onImplicitHeightChanged: {
@@ -233,7 +232,6 @@ Item {
                 required property bool can_stop
                 required property int depth
                 required property string kind
-                required property bool is_completed
                 required property bool can_complete
 
                 width: list.width
@@ -253,7 +251,6 @@ Item {
                     can_stop: can_stop,
                     depth: depth,
                     kind: kind,
-                    is_completed: is_completed,
                     can_complete: can_complete,
                 })
             }

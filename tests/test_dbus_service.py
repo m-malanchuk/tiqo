@@ -44,11 +44,24 @@ def dbus_session(qapp: QCoreApplication):
     conn = make_db()
     facade = SessionFacade(conn)
     shown: list[bool] = []
-    api = register_tiqo_dbus(facade, on_show_window=lambda: shown.append(True), parent=qapp)
+    requested: list[int] = []
+    api = register_tiqo_dbus(
+        facade,
+        on_show_window=lambda: shown.append(True),
+        on_request_checklist_completion=lambda task_id: requested.append(task_id) or "ok",
+        parent=qapp,
+    )
     if api is None:
         pytest.skip("failed to register D-Bus service")
 
-    yield {"api": api, "facade": facade, "conn": conn, "shown": shown, "bus": bus}
+    yield {
+        "api": api,
+        "facade": facade,
+        "conn": conn,
+        "shown": shown,
+        "requested": requested,
+        "bus": bus,
+    }
 
     bus.unregisterService(SERVICE_NAME)
     bus.unregisterObject(OBJECT_PATH)
@@ -71,8 +84,9 @@ def test_interface_is_org_tiqo_app1(dbus_session: dict) -> None:
     assert "Ping" in xml
     assert "Version" in xml
     assert "ListWork" in xml
-    assert "ToggleChecklist" in xml
-    assert "CompleteChecklist" in xml
+    assert "RequestChecklistCompletion" in xml
+    assert "ToggleChecklist" not in xml
+    assert "CompleteChecklist" not in xml
     assert "WorkChanged" in xml
 
 
@@ -110,7 +124,7 @@ def test_show_window_callback(dbus_session: dict) -> None:
     assert dbus_session["shown"] == [True]
 
 
-def test_toggle_checklist_round_trip(dbus_session: dict) -> None:
+def test_request_checklist_completion_callback(dbus_session: dict) -> None:
     bus = dbus_session["bus"]
     iface = QDBusInterface(SERVICE_NAME, OBJECT_PATH, INTERFACE, bus)
     task = TaskRepo(dbus_session["conn"]).create(
@@ -119,9 +133,6 @@ def test_toggle_checklist_round_trip(dbus_session: dict) -> None:
         kind=TaskKind.CHECKLIST,
         is_favorite=True,
     )
-    result = iface.call("ToggleChecklist", task.id)
+    result = iface.call("RequestChecklistCompletion", task.id)
     assert result.arguments() == ["ok"]
-    row = dbus_session["facade"].list_tasks(LIST_FAVORITES_ID)
-    snapshot = next(item for item in row if item.task_id == task.id)
-    assert snapshot.is_completed is True
-    assert snapshot.progress == 1.0
+    assert dbus_session["requested"] == [task.id]

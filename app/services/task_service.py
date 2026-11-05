@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from datetime import date, datetime
 
-from app.domain.models import CompletionKind, Task, TaskKind
+from app.domain.models import CompletionKind, TaskCompletion, TaskKind
 from app.domain.timeutil import utc_now
 from app.storage.assignment_repo import AssignmentRepo
 from app.storage.completion_repo import CompletionRepo
@@ -26,52 +26,14 @@ class TaskService:
         self._stats = StatsRepo(conn)
         self._work = WorkRepo(conn)
 
-    def set_checklist_done(
+    def complete_checklist(
         self,
         task_id: int,
-        done: bool = True,
         *,
+        note: str = "",
         now: datetime | None = None,
-    ) -> Task:
-        """Set a checklist task's binary state and record a done event once.
-
-        Unchecking changes the current state but deliberately keeps prior
-        completion events as history. Calling this with the current state is
-        idempotent and does not create duplicate events.
-        """
-        task = self._tasks.get(task_id)
-        if task is None:
-            raise KeyError(f"Task {task_id} not found")
-        if task.kind is not TaskKind.CHECKLIST:
-            raise ValueError("Only checklist tasks can be marked done")
-        desired = bool(done)
-        if task.is_completed == desired:
-            return task
-
-        stamp = now or utc_now()
-        with atomic(self._conn):
-            if desired:
-                self._completions.create(
-                    task_id,
-                    session_id=None,
-                    completed_at=stamp,
-                    kind=CompletionKind.CHECKLIST,
-                )
-                updated = self._tasks.set_checklist_state(
-                    task_id,
-                    is_completed=True,
-                    completed_at=stamp,
-                )
-            else:
-                updated = self._tasks.set_checklist_state(
-                    task_id,
-                    is_completed=False,
-                    completed_at=None,
-                )
-        return updated
-
-    def complete_checklist(self, task_id: int, *, now: datetime | None = None) -> Task:
-        """Record one checklist execution, even when it was completed before."""
+    ) -> TaskCompletion:
+        """Record one checklist execution as a standalone history event."""
         task = self._tasks.get(task_id)
         if task is None:
             raise KeyError(f"Task {task_id} not found")
@@ -79,25 +41,13 @@ class TaskService:
             raise ValueError("Only checklist tasks can be marked done")
         stamp = now or utc_now()
         with atomic(self._conn):
-            self._completions.create(
+            return self._completions.create(
                 task_id,
                 session_id=None,
                 completed_at=stamp,
                 kind=CompletionKind.CHECKLIST,
+                note=note.strip(),
             )
-            updated = self._tasks.set_checklist_state(
-                task_id,
-                is_completed=True,
-                completed_at=stamp,
-            )
-        return updated
-
-    def toggle_checklist(self, task_id: int, *, now: datetime | None = None) -> Task:
-        """Toggle a checklist task and return its new state."""
-        task = self._tasks.get(task_id)
-        if task is None:
-            raise KeyError(f"Task {task_id} not found")
-        return self.set_checklist_done(task_id, not task.is_completed, now=now)
 
     def set_today_assignment(
         self,

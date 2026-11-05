@@ -238,12 +238,12 @@ Item {
                 FormButton {
                     id: completeButton
                     visible: kind === "checklist"
-                    text: "✓  " + (isCompleted ? t("action.complete_again") : t("action.complete"))
+                    text: t("action.complete")
                     highlighted: false
                     Layout.fillWidth: false
                     Layout.preferredWidth: 140
                     Layout.minimumWidth: 132
-                    onClicked: app.completeChecklist(taskId)
+                    onClicked: app.requestChecklistCompletion(taskId)
                 }
             }
         }

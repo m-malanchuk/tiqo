@@ -73,8 +73,7 @@ class Task:
     kind: TaskKind
     default_mode: TimerMode
     default_target_seconds: int | None
-    is_completed: bool
-    completed_at: datetime | None
+    prompt_completion_note: bool
     is_favorite: bool
     is_archived: bool
     created_at: datetime

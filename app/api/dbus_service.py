@@ -32,8 +32,8 @@ SERVICE_NAME = "org.tiqo.App"
 OBJECT_PATH = "/org/tiqo/App"
 INTERFACE = "org.tiqo.App1"
 # Bump when breaking the IPC shape (methods, signal meaning, JSON fields).
-# 5: checklist task snapshots, correction toggle, and repeated completion.
-API_VERSION = "5"
+# 6: checklist executions with optional note dialogs.
+API_VERSION = "6"
 
 
 @cast(Any, ClassInfo)({"D-Bus Interface": INTERFACE})
@@ -47,11 +47,13 @@ class TiqoDBusAdaptor(QObject):
         facade: SessionFacade,
         *,
         on_show_window: Callable[[], None] | None = None,
+        on_request_checklist_completion: Callable[[int], str] | None = None,
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
         self._facade = facade
         self._on_show = on_show_window
+        self._on_request_checklist_completion = on_request_checklist_completion
 
     @Slot(result=str)
     def Ping(self) -> str:  # noqa: N802
@@ -115,23 +117,14 @@ class TiqoDBusAdaptor(QObject):
             return f"error:{exc}"
 
     @Slot(int, result=str)
-    def ToggleChecklist(self, task_id: int) -> str:  # noqa: N802
-        """Toggle a binary task's done/not-done state."""
+    def RequestChecklistCompletion(self, task_id: int) -> str:  # noqa: N802
+        """Request the application-owned checklist completion flow."""
+        if self._on_request_checklist_completion is None:
+            return "error:checklist completion flow unavailable"
         try:
-            self._facade.toggle_checklist(int(task_id))
-            return "ok"
+            return self._on_request_checklist_completion(int(task_id))
         except Exception as exc:
-            log.exception("Unexpected failure while toggling checklist %s", task_id)
-            return f"error:{exc}"
-
-    @Slot(int, result=str)
-    def CompleteChecklist(self, task_id: int) -> str:  # noqa: N802
-        """Record one checklist execution (repeated executions are allowed)."""
-        try:
-            self._facade.complete_checklist(int(task_id))
-            return "ok"
-        except Exception as exc:
-            log.exception("Unexpected failure while completing checklist %s", task_id)
+            log.exception("Unexpected failure while requesting checklist completion %s", task_id)
             return f"error:{exc}"
 
     @Slot()
@@ -147,6 +140,7 @@ def register_tiqo_dbus(
     facade: SessionFacade,
     *,
     on_show_window: Callable[[], None] | None = None,
+    on_request_checklist_completion: Callable[[int], str] | None = None,
     parent: QObject | None = None,
 ) -> TiqoDBusAdaptor | None:
     """Register ``org.tiqo.App`` on the session bus. Returns None on failure."""
@@ -155,7 +149,12 @@ def register_tiqo_dbus(
         log.warning("D-Bus session bus unavailable; Plasma IPC disabled")
         return None
 
-    adaptor = TiqoDBusAdaptor(facade, on_show_window=on_show_window, parent=parent)
+    adaptor = TiqoDBusAdaptor(
+        facade,
+        on_show_window=on_show_window,
+        on_request_checklist_completion=on_request_checklist_completion,
+        parent=parent,
+    )
     options = (
         QDBusConnection.RegisterOption.ExportAllSlots
         | QDBusConnection.RegisterOption.ExportAllSignals

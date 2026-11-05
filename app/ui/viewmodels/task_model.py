@@ -23,7 +23,6 @@ def _structure_key(row: TaskRow) -> tuple:
         row.description,
         row.mode,
         row.kind,
-        row.is_completed,
         row.can_complete,
         row.is_scheduled_today,
     )
@@ -46,9 +45,8 @@ class TaskModel(QAbstractListModel):
     HasChildrenRole = Qt.ItemDataRole.UserRole + 14
     IsExpandedRole = Qt.ItemDataRole.UserRole + 15
     KindRole = Qt.ItemDataRole.UserRole + 16
-    IsCompletedRole = Qt.ItemDataRole.UserRole + 17
-    CanCompleteRole = Qt.ItemDataRole.UserRole + 18
-    IsScheduledTodayRole = Qt.ItemDataRole.UserRole + 19
+    CanCompleteRole = Qt.ItemDataRole.UserRole + 17
+    IsScheduledTodayRole = Qt.ItemDataRole.UserRole + 18
 
     _LIVE_ROLES = (
         TimeTodayRole,
@@ -56,7 +54,6 @@ class TaskModel(QAbstractListModel):
         CanStartRole,
         CanPauseRole,
         CanStopRole,
-        IsCompletedRole,
         CanCompleteRole,
     )
 
@@ -92,7 +89,6 @@ class TaskModel(QAbstractListModel):
             self.HasChildrenRole: item.has_children,
             self.IsExpandedRole: item.is_expanded,
             self.KindRole: item.kind,
-            self.IsCompletedRole: item.is_completed,
             self.CanCompleteRole: item.can_complete,
             self.IsScheduledTodayRole: item.is_scheduled_today,
         }
@@ -116,7 +112,6 @@ class TaskModel(QAbstractListModel):
             self.HasChildrenRole: b"hasChildren",
             self.IsExpandedRole: b"isExpanded",
             self.KindRole: b"kind",
-            self.IsCompletedRole: b"isCompleted",
             self.CanCompleteRole: b"canComplete",
             self.IsScheduledTodayRole: b"isScheduledToday",
         }

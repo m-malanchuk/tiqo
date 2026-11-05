@@ -22,10 +22,16 @@ def test_seed_showcase_has_hierarchy_and_work() -> None:
     assert "Грамматика" in titles
     assert "Лексика" in titles
     assert "Помодоро" in titles
+    assert "Подготовить документы" in titles
+    assert "Записать итоги дня" in titles
+    assert "Проверить почту" in titles
+    assert "Разобрать входящие задачи" in titles
     assert CompletionRepo(conn).count() == 8
     english = titles["Английский"]
     grammar = titles["Грамматика"]
     pomodoro = titles["Помодоро"]
+    assert titles["Записать итоги дня"].prompt_completion_note is True
+    assert titles["Проверить почту"].prompt_completion_note is False
     assert TaskRepo(conn).parent_of(grammar.id) == english.id
 
     work_by_task = {w.task_id: w for w in WorkRepo(conn).list_all()}

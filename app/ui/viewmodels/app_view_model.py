@@ -630,6 +630,8 @@ class AppViewModel(DialogsMixin, QObject):
             date.fromisoformat(value)
         except ValueError:
             return
+        if value == self._schedule_date:
+            return
         self._schedule_date = value
         self.scheduleDialogChanged.emit()
 
@@ -672,6 +674,8 @@ class AppViewModel(DialogsMixin, QObject):
 
     @Slot(str)
     def setSessionNote(self, value: str) -> None:  # noqa: N802
+        if value == self._session_note:
+            return
         self._session_note = value
         self.sessionNoteDialogChanged.emit()
 
@@ -722,6 +726,8 @@ class AppViewModel(DialogsMixin, QObject):
 
     @Slot(str)
     def setHistoryNote(self, value: str) -> None:  # noqa: N802
+        if value == self._history_note:
+            return
         self._history_note = value
         self.historyNoteDialogChanged.emit()
 
@@ -973,16 +979,22 @@ class AppViewModel(DialogsMixin, QObject):
 
     @Slot(str)
     def setHistoryQuery(self, value: str) -> None:  # noqa: N802
+        if value == self._history_query:
+            return
         self._history_query = value
         self.refresh_history()
 
     @Slot(str)
     def setHistoryFrom(self, value: str) -> None:  # noqa: N802
+        if value == self._history_from:
+            return
         self._history_from = value
         self.refresh_history()
 
     @Slot(str)
     def setHistoryTo(self, value: str) -> None:  # noqa: N802
+        if value == self._history_to:
+            return
         self._history_to = value
         self.refresh_history()
 
